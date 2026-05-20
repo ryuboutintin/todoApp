@@ -3,6 +3,7 @@
 ## 개요
 - 이 앱은 정적 파일(`index.html`, `style.css`, `script.js`)만 배포하면 된다.
 - 백엔드 서버는 없고, 데이터 저장과 인증은 Supabase를 사용한다.
+- 런타임에서 Supabase JavaScript SDK는 CDN으로 불러온다.
 - 배포 전 핵심 체크 포인트는 다음 3가지다.
   - Supabase `todos` 테이블과 RLS 정책 준비
   - Supabase Email Auth / Social Auth 설정 준비
@@ -13,7 +14,8 @@
 - 이메일 인증을 완료한 사용자만 로그인 후 Todo를 사용할 수 있다.
 - Google/GitHub 로그인 사용자는 각 Provider 인증 후 바로 로그인할 수 있다.
 - Todo CRUD와 드래그 정렬은 모두 Supabase `todos` 테이블에 저장된다.
-- 기존 `localStorage` 데이터는 더 이상 사용하지 않는다.
+- 기존 `localStorage["todos"]` 데이터는 더 이상 사용하지 않으며, 앱 시작 시 정리된다.
+- OAuth 리다이렉트 진행 상태는 `sessionStorage["pending-oauth-provider"]`로 잠시 추적한다.
 
 ## 1. Supabase 준비
 
@@ -132,7 +134,8 @@ execute function public.set_updated_at();
   - `https://your-app.netlify.app`
 - 로컬 테스트 URL도 필요하면 함께 등록한다.
   - `http://localhost:8001`
-- 소셜 로그인은 `redirectTo`를 명시하므로, 로컬과 운영 URL이 모두 Redirect URLs 목록에 있어야 한다.
+- 소셜 로그인은 `redirectTo`로 현재 `origin + pathname`을 넘기므로, 실제 앱이 배포되는 정확한 경로까지 Redirect URLs 목록과 맞아야 한다.
+- 쿼리스트링이나 해시를 Redirect URL 기준으로 삼지 않으므로, 라우팅 없이 정적 페이지 루트나 실제 파일 경로 기준으로 등록한다.
 
 ### 2-5. 메일 발송 제한 확인
 - Supabase 기본 이메일 제공자는 메일 발송 제한이 매우 낮다.
@@ -151,6 +154,10 @@ execute function public.set_updated_at();
 ### 3-2. 브라우저 실행 조건
 - 이 앱은 `file://`로 직접 열면 안 된다.
 - 반드시 정적 웹서버나 정적 호스팅에서 `http://` 또는 `https://`로 열어야 한다.
+
+### 3-3. CDN 접근 가능 여부
+- `index.html`은 `https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2`를 직접 로드한다.
+- 사내망 또는 네트워크 제한 환경이라면 이 CDN 접근이 가능한지 먼저 확인한다.
 
 ## 4. 로컬 검증
 
@@ -177,6 +184,8 @@ http://localhost:8001
 - 로그인 후 Todo 추가/완료/우선순위 변경/드래그 정렬/삭제가 되는지
 - 로그아웃 시 인증 화면으로 돌아가는지
 - 서로 다른 계정으로 로그인했을 때 각자 자신의 Todo만 보이는지
+- 새로고침 후에도 세션과 Todo 목록이 정상 복구되는지
+- 소셜 로그인 실패 시 오류 문구가 보이고, 재시도 후 정상 복귀 가능한지
 
 ## 5. 정적 배포 방법
 
@@ -208,6 +217,7 @@ http://localhost:8001
 - 현재 anon key는 클라이언트에 노출된다. 이는 정상적이지만, RLS가 깨지면 데이터가 노출될 수 있다.
 - 메일 발송 제한 문제를 피하려면 운영 배포 전 Custom SMTP 설정을 권장한다.
 - v1에서는 이메일 계정과 소셜 계정을 자동으로 링크하지 않으므로, 같은 이메일이어도 로그인 방식에 따라 별도 계정으로 취급될 수 있다.
+- 정적 파일은 자체 서버가 없어도 되지만, Supabase API와 jsDelivr CDN에 브라우저에서 직접 접근할 수 있어야 한다.
 - 향후 보안을 더 강화하려면:
   - 키를 직접 코드에 하드코딩하지 않고 배포 단계에서 치환
   - 비밀번호 재설정 기능 추가

@@ -90,6 +90,22 @@ function getAuthErrorMessage(error, action) {
   return rawMessage || "인증 요청을 처리하지 못했습니다.";
 }
 
+function getOAuthErrorMessage(error, provider) {
+  const rawMessage = error?.message ?? "";
+  const normalizedMessage = rawMessage.toLowerCase();
+  const providerLabel = getProviderLabel(provider);
+
+  if (normalizedMessage.includes("unsupported provider")) {
+    return `${providerLabel} 로그인이 Supabase 프로젝트에서 활성화되지 않았습니다. Supabase Dashboard > Authentication > Providers에서 ${providerLabel}를 켜고 Client ID/Secret을 저장하세요.`;
+  }
+
+  if (normalizedMessage.includes("redirect")) {
+    return `${providerLabel} 로그인 Redirect URL 설정을 확인하세요.`;
+  }
+
+  return `${providerLabel} 로그인을 시작하지 못했습니다.`;
+}
+
 function isFileProtocol() {
   return window.location.protocol === "file:";
 }
@@ -836,8 +852,8 @@ async function signInWithOAuth(provider) {
   if (error) {
     console.error(`Failed to sign in with ${provider}.`, error);
     clearPendingOAuthProvider();
-    setAuthStatus(`${providerLabel} 로그인을 시작하지 못했습니다.`, "error");
-    setSyncStatus("소셜 로그인 연결에 실패했습니다.", "error");
+    setAuthStatus(getOAuthErrorMessage(error, provider), "error");
+    setSyncStatus(getOAuthErrorMessage(error, provider), "error");
     setAuthControlsDisabled(false);
   }
 }

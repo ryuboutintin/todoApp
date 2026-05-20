@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo List</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <section class="todo-card">
+      <header class="app-header">
+        <p class="eyebrow">Material Todo</p>
+        <h1>오늘의 할 일</h1>
+        <p class="app-description">우선순위를 나누고, 드래그로 순서를 정리하세요.</p>
+      </header>
+      <form class="todo-form" id="todo-form">
+        <label class="sr-only" for="todo-input">할 일 입력</label>
+        <input
+          id="todo-input"
+          type="text"
+          placeholder="할 일을 입력하세요"
+          autocomplete="off"
+        >
+        <label class="sr-only" for="todo-priority">우선순위 선택</label>
+        <select id="todo-priority">
+          <option value="high">높음</option>
+          <option value="medium" selected>중간</option>
+          <option value="low">낮음</option>
+        </select>
+        <button type="submit">추가</button>
+      </form>
+      <div class="priority-board" id="todo-board"></div>
+      <p class="empty-message" id="empty-message">등록된 할 일이 없습니다.</p>
+    </section>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
